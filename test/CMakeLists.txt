@@ -1,0 +1,2 @@
+ADD_EXECUTABLE(test_crc32 test_crc32.cc)
+TARGET_LINK_LIBRARIES(test_crc32 LINK_PUBLIC crc32_simd)
