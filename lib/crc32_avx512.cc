@@ -2,6 +2,8 @@
 #include <cstdint>
 
 #ifdef _MSC_VER
+# include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 # include <intrin.h>
 # define USE_VPCLMULQDQ /* nothing */
 #else
@@ -15,6 +17,11 @@
 #endif
 
 #include <immintrin.h>
+
+#ifdef _MSC_VER
+/* MSVC does not seem to define this intrinsic for vmovdqa */
+# define _mm_load_epi32(x) *reinterpret_cast<const __m128i*>(x)
+#endif
 
 /*
   This implementation is based on
