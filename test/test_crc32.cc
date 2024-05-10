@@ -135,7 +135,7 @@ int main(int argc, char **argv)
     fputs("Testing AVX512+VPCLMULQDQ: ", stderr);
     for (size_t i = sizeof funcs / sizeof(*funcs); i--; ) {
       fputs(funcs[i].name, stderr);
-      if (size_t s = test_buf(buf, sizeof buf, funcs[i].c[1], funcs[i].c[2])) {
+      if (size_t s = test_buf(buf, sizeof buf, funcs[i].c[0], funcs[i].c[1])) {
         fprintf(stderr, "(failed at %zu)", s);
         status = EXIT_FAILURE;
       }
