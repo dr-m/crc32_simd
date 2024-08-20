@@ -17,8 +17,13 @@ assembler implementation in https://github.com/intel/intel-ipsec-mb/.
 
 The necessary bits of AVX512 support (most notably, AVX512BW to allow
 unaligned 64-byte loads) was introduced in Clang 8 and GCC 11.
+However, Clang 8 lacks the compiler intrinsic `_xgetbv()`, which is
+necessary for ensuring that the operating system has enabled the
+saving and restoring AVX512 registers on context switches.
 
-This has been tested on an Intel® Core™ i7-6500U CPU
+This has been tested on GNU/Linux on an Intel® Core™ i7-6500U CPU as
+well as an Intel® Xeon® Platinum 8368, the latter one with and without
+the Linux kernel option `noxsave`.
 
 You can try it out as follows:
 ```sh

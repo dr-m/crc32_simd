@@ -11,7 +11,8 @@ typedef SSIZE_T ssize_t;
 # if __GNUC__ >= 14 || (defined __clang_major__ && __clang_major__ >= 18)
 #  define TARGET "pclmul,evex512,avx512f,avx512dq,avx512bw,avx512vl,vpclmulqdq"
 #  define USE_VPCLMULQDQ __attribute__((target(TARGET)))
-# elif __GNUC__ >= 11 || (defined __clang_major__ && __clang_major__ >= 8)
+# elif __GNUC__ >= 11 || (defined __clang_major__ && __clang_major__ >= 9)
+/* clang 8 does not support _xgetbv(), which we also need */
 #  define TARGET "pclmul,avx512f,avx512dq,avx512bw,avx512vl,vpclmulqdq"
 #  define USE_VPCLMULQDQ __attribute__((target(TARGET)))
 # else
@@ -426,19 +427,41 @@ static unsigned crc32_avx512(unsigned crc, const char *buf, size_t size,
   }
 }
 
+#ifdef __GNUC__
+__attribute__((target("xsave")))
+#endif
+static bool os_have_avx512()
+{
+  // The following flags must be set: SSE, AVX, OPMASK, ZMM_HI256, HI16_ZMM
+  return !(~_xgetbv(0 /*_XCR_XFEATURE_ENABLED_MASK*/) & 0xe6);
+}
+
 extern "C" int have_vpclmulqdq()
 {
 # ifdef _MSC_VER
   int regs[4];
+  __cpuid(regs, 0);
+  if (regs[0] < 7)
+    return 0;
+  __cpuid(regs, 1);
+  if (~regs[2] & (1U<<28/*AVX*/ | 1U<<27/*XSAVE*/))
+    return 0;
   __cpuidex(regs, 7, 0);
   uint32_t ebx = regs[1], ecx = regs[2];
 # else
   uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
+  __cpuid(0, eax, ebx, ecx, edx);
+  if (eax < 7)
+    return 0;
+  __cpuid(1, eax, ebx, ecx, edx);
+  if (~ecx & (1U<<28/*AVX*/ | 1U<<27/*XSAVE*/))
+    return 0;
   __cpuid_count(7, 0, eax, ebx, ecx, edx);
 # endif
   return ecx & 1U<<10/*VPCLMULQDQ*/ &&
     !(~ebx & ((1U<<16/*AVX512F*/ | 1U<<17/*AVX512DQ*/ |
-               1U<<30/*AVX512BW*/ | 1U<<31/*AVX512VL*/)));
+               1U<<30/*AVX512BW*/ | 1U<<31/*AVX512VL*/))) &&
+    os_have_avx512();
 }
 
 extern "C"
