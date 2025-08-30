@@ -223,8 +223,8 @@ static unsigned crc32_avx512(unsigned crc, const char *buf, size_t size,
 {
   const __m512i R = reflect ? _mm512_setzero_si512() : _mm512_broadcast_i32x4
     (_mm_set_epi64x(0x001020304050607, 0x08090A0B0C0D0E0F)),
-    crc_in = reflect ? _mm512_castsi128_si512(_mm_cvtsi32_si128(~crc))
-    : _mm512_bslli_epi128(_mm512_castsi128_si512(_mm_cvtsi32_si128(~crc)), 12),
+    crc_in = reflect ? _mm512_zextsi128_si512(_mm_cvtsi32_si128(~crc))
+    : _mm512_bslli_epi128(_mm512_zextsi128_si512(_mm_cvtsi32_si128(~crc)), 12),
     b512 = _mm512_broadcast_i32x4(_mm_load_epi32(tab.b512));
   __m128i crc_out;
   __m512i lo;
