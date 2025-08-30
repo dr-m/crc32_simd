@@ -8,13 +8,7 @@ typedef SSIZE_T ssize_t;
 # define USE_VPCLMULQDQ /* nothing */
 #else
 # include <cpuid.h>
-# if __GNUC__ >= 15
-#  define TARGET "pclmul,avx10.1,vpclmulqdq"
-#  define USE_VPCLMULQDQ __attribute__((target(TARGET)))
-# elif __GNUC__ >= 14 || (defined __clang_major__ && __clang_major__ >= 18)
-#  define TARGET "pclmul,evex512,avx512f,avx512dq,avx512bw,avx512vl,vpclmulqdq"
-#  define USE_VPCLMULQDQ __attribute__((target(TARGET)))
-# elif __GNUC__ >= 11 || (defined __clang_major__ && __clang_major__ >= 9)
+# if __GNUC__ >= 11 || (defined __clang_major__ && __clang_major__ >= 9)
 /* clang 8 does not support _xgetbv(), which we also need */
 #  define TARGET "pclmul,avx512f,avx512dq,avx512bw,avx512vl,vpclmulqdq"
 #  define USE_VPCLMULQDQ __attribute__((target(TARGET)))
