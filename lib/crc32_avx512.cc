@@ -10,7 +10,7 @@ typedef SSIZE_T ssize_t;
 # include <cpuid.h>
 # if __GNUC__ >= 11 || (defined __clang_major__ && __clang_major__ >= 9)
 /* clang 8 does not support _xgetbv(), which we also need */
-#  define TARGET "pclmul,avx512f,avx512dq,avx512bw,avx512vl,vpclmulqdq"
+#  define TARGET "pclmul,avx512f,avx512bw,avx512vl,vpclmulqdq"
 #  define USE_VPCLMULQDQ __attribute__((target(TARGET)))
 # else
 #  define USE_VPCLMULQDQ /* nothing */
@@ -187,7 +187,7 @@ template<uint8_t bits> USE_VPCLMULQDQ
 static inline __m512i extract512_128(__m512i a)
 {
   static_assert(bits <= 3, "usage");
-  return _mm512_zextsi128_si512(_mm512_extracti64x2_epi64(a, bits));
+  return _mm512_zextsi128_si512(_mm512_extracti32x4_epi32(a, bits));
 }
 
 alignas(16) static const uint64_t shuffle128[4] = {
@@ -277,7 +277,7 @@ static unsigned crc32_avx512(unsigned crc, const char *buf, size_t size,
 
     __m256i c2 = _mm512_castsi512_si256(_mm512_shuffle_i64x2(c4, c4, 0b01001110));
     c2 = xor256(c2, _mm512_castsi512_si256(c4));
-    crc_out = xor128(_mm256_extracti64x2_epi64(c2, 1),
+    crc_out = xor128(_mm256_extracti32x4_epi32(c2, 1),
                      _mm256_castsi256_si128(c2));
     size += 128 - 16;
     goto final_reduction;
@@ -302,7 +302,7 @@ static unsigned crc32_avx512(unsigned crc, const char *buf, size_t size,
                  extract512_128<3>(lo));
       crc512 = xor512(crc512, _mm512_shuffle_i64x2(crc512, crc512, 0b01001110));
       const __m256i crc256 = _mm512_castsi512_si256(crc512);
-      crc_out = xor128(_mm256_extracti64x2_epi64(crc256, 1),
+      crc_out = xor128(_mm256_extracti32x4_epi32(crc256, 1),
                       _mm256_castsi256_si128(crc256));
       size -= 16;
     } else {
@@ -456,7 +456,7 @@ extern "C" int have_vpclmulqdq()
   __cpuid_count(7, 0, eax, ebx, ecx, edx);
 # endif
   return ecx & 1U<<10/*VPCLMULQDQ*/ &&
-    !(~ebx & ((1U<<16/*AVX512F*/ | 1U<<17/*AVX512DQ*/ |
+    !(~ebx & ((1U<<16/*AVX512F*/ |
                1U<<30/*AVX512BW*/ | 1U<<31/*AVX512VL*/))) &&
     os_have_avx512();
 }
